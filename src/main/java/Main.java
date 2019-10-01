@@ -1,13 +1,10 @@
-import java.io.File;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.util.concurrent.CompletableFuture;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.TrustManagerFactory;
 
 import com.linecorp.armeria.common.HttpResponse;
-import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.server.Server;
 import com.linecorp.armeria.server.ServerBuilder;
 
