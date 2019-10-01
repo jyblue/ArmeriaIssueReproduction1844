@@ -1,7 +1,7 @@
 # Armeria issue#1844 reproduction
 ## Issue
 https://github.com/line/armeria/issues/1844
-## Key Generation Command
+## Test key generation command
 ### JKS Key
 ```
 keytool -genkeypair -keyalg RSA -keysize 2048 -storetype JKS -keystore keyStore01.jks
