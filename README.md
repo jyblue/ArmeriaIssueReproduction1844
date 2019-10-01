@@ -1,6 +1,15 @@
 # Armeria issue#1844 reproduction
 ## Issue
 https://github.com/line/armeria/issues/1844
+## Key Generation Command
+### JKS Key
+```
+keytool -genkeypair -keyalg RSA -keysize 2048 -storetype JKS -keystore keyStore01.jks
+```
+### PKCS Key
+```
+keytool -genkeypair -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keyStore01.p12
+```
 ## Result
 ### Case 01
 * Key Store Type : "JKS"
