@@ -85,7 +85,7 @@ If key store password is not given to PKCS12 key store,
 Armeria server is built and running without exceptions but fails when ssl/tls requests come.
 
 ## Internal cause
-Exception occurs when netty SslHander is trying to decode(unwrap) clinet's first record(packet)  
+Exception occurs when netty SslHander is trying to decode(unwrap) client's first record(packet)  
 https://github.com/netty/netty/blob/d8b1a2d93f556a08270e6549bf7f91b3b09f24bb/handler/src/main/java/io/netty/handler/ssl/SslHandler.java#L1329
 ``` java
     /**
