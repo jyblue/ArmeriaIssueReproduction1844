@@ -80,3 +80,8 @@ javax.net.ssl.SSLHandshakeException: error:100000ae:SSL routines:OPENSSL_interna
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:834)
 ```
+
+## Internal cause
+Exception occurs when netty SslHander is trying to decode(unwrap) clinet's first record(packet)  
+https://github.com/netty/netty/blob/d8b1a2d93f556a08270e6549bf7f91b3b09f24bb/handler/src/main/java/io/netty/handler/ssl/SslHandler.java#L1329
+
