@@ -2,11 +2,11 @@
 ## Issue
 https://github.com/line/armeria/issues/1844
 ## Test key generation command
-### JKS Key
+* JKS Key
 ```
 keytool -genkeypair -keyalg RSA -keysize 2048 -storetype JKS -keystore keyStore01.jks
 ```
-### PKCS Key
+* PKCS Key
 ```
 keytool -genkeypair -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keyStore01.p12
 ```
