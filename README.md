@@ -10,7 +10,7 @@ keytool -genkeypair -keyalg RSA -keysize 2048 -storetype JKS -keystore keyStore0
 ```
 keytool -genkeypair -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore keyStore01.p12
 ```
-## Result
+## Test result
 ### Case 01
 * Key Store Type : "JKS"
 * Key Store Password : **given**
@@ -80,8 +80,70 @@ javax.net.ssl.SSLHandshakeException: error:100000ae:SSL routines:OPENSSL_interna
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:834)
 ```
+## Conclusion
+If key store password is not given to PKCS12 key store,  
+Armeria server is built and running without exceptions but fails when ssl/tls requests come.
 
 ## Internal cause
 Exception occurs when netty SslHander is trying to decode(unwrap) clinet's first record(packet)  
 https://github.com/netty/netty/blob/d8b1a2d93f556a08270e6549bf7f91b3b09f24bb/handler/src/main/java/io/netty/handler/ssl/SslHandler.java#L1329
+``` java
+    /**
+     * Unwraps inbound SSL records.
+     */
+    private int unwrap(
+            ChannelHandlerContext ctx, ByteBuf packet, int offset, int length) throws SSLException {
+        final int originalLength = length;
+        boolean wrapLater = false;
+        boolean notifyClosure = false;
+        int overflowReadableBytes = -1;
+        ByteBuf decodeOut = allocate(ctx, length);
+        try {
+            // Only continue to loop if the handler was not removed in the meantime.
+            // See https://github.com/netty/netty/issues/5860
+            unwrapLoop: while (!ctx.isRemoved()) {
+                final SSLEngineResult result = engineType.unwrap(this, packet, offset, length, decodeOut);
+                final Status status = result.getStatus();
+                final HandshakeStatus handshakeStatus = result.getHandshakeStatus();
+                final int produced = result.bytesProduced();
+                final int consumed = result.bytesConsumed()
+```
 
+## Add validation (draft)
+``` java
+void validateSslContext(SslContext sslContext) throws Exception {
+        SSLEngine serverEngine = sslContext.newEngine(ByteBufAllocator.DEFAULT);
+        serverEngine.setUseClientMode(false);
+        serverEngine.setNeedClientAuth(true);
+
+        SelfSignedCertificate ssc = new SelfSignedCertificate("foo.com");
+        SslContext sslContextClient
+                = buildSslContext(() -> SslContextBuilder.forClient()
+                                                         .keyManager(ssc.certificate(), ssc.privateKey()),
+                                           sslContextBuilder -> {
+                    sslContextBuilder.keyManager(ssc.certificate(), ssc.privateKey());
+                    sslContextBuilder.trustManager(ssc.certificate());
+        });
+        SSLEngine clientEngine = sslContextClient.newEngine(ByteBufAllocator.DEFAULT);
+        clientEngine.setUseClientMode(true);
+
+        clientEngine.beginHandshake();
+        serverEngine.beginHandshake();
+
+        ByteBuffer clientPacket = ByteBuffer.allocate(clientEngine.getSession().getApplicationBufferSize());
+        clientEngine.wrap(clientPacket, clientPacket);
+        clientPacket.flip();
+
+        ByteBuffer serverPacket = ByteBuffer.allocate(serverEngine.getSession().getApplicationBufferSize());
+        serverEngine.unwrap(clientPacket, serverPacket);
+    }
+```
+
+## Validation result
+A test server builder fails with expected exception. (same as original error)
+```
+failed to validate SSL/TLS configuration : javax.net.ssl.SSLHandshakeException: error:100000ae:SSL routines:OPENSSL_internal:NO_CERTIFICATE_SET
+java.lang.RuntimeException: failed to validate SSL/TLS configuration : javax.net.ssl.SSLHandshakeException: error:100000ae:SSL routines:OPENSSL_internal:NO_CERTIFICATE_SET
+	at com.linecorp.armeria.server.VirtualHostBuilder.build(VirtualHostBuilder.java:843)
+	at com.linecorp.armeria.server.ServerBuilder.build(ServerBuilder.java:1432)
+```
